@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReadyWise — Product Lookup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0c;--surface:#111114;--surface2:#1a1a1f;--surface3:#222228;
+  --border:#2a2a32;--border2:#3a3a44;
+  --text:#e8e8ec;--text2:#9898a4;--text3:#68687a;
+  --accent:#c9a55a;--accent2:#e0c17a;--accent-dim:#c9a55a22;
+  --red:#e04848;--green:#48c078;--blue:#4888e0;
+  --radius:12px;--radius-sm:8px;
+}
+html{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+body{min-height:100vh;display:flex;flex-direction:column}
+
+/* HEADER */
+.header{
+  position:sticky;top:0;z-index:100;
+  background:rgba(10,10,12,0.82);backdrop-filter:blur(20px) saturate(1.4);
+  border-bottom:1px solid var(--border);
+  padding:0 2rem;
+}
+.header-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:1.5rem;height:64px}
+.logo{display:flex;align-items:center;gap:0.75rem;text-decoration:none}
+.logo-icon{
+  width:36px;height:36px;border-radius:8px;
+  background:linear-gradient(135deg,var(--accent),#8a6a2a);
+  display:grid;place-items:center;font-weight:700;font-size:14px;color:#fff;
+  letter-spacing:-0.5px;
+}
+.logo-text{font-weight:600;font-size:1.1rem;color:var(--text);letter-spacing:-0.3px}
+.logo-tag{font-size:0.7rem;color:var(--text3);font-weight:400;letter-spacing:0.5px;text-transform:uppercase;margin-left:-0.5rem}
+.header-stats{margin-left:auto;display:flex;gap:1.5rem}
+.stat{text-align:right}
+.stat-val{font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:600;color:var(--accent)}
+.stat-label{font-size:0.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px}
+
+/* SEARCH AREA */
+.search-area{
+  max-width:1400px;margin:0 auto;width:100%;
+  padding:2rem 2rem 0;
+}
+.search-box{
+  position:relative;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  transition:border-color 0.2s,box-shadow 0.2s;
+}
+.search-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.search-icon{position:absolute;left:1.25rem;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none}
+.search-input{
+  width:100%;padding:1rem 1.25rem 1rem 3.25rem;
+  background:transparent;border:none;outline:none;
+  font-size:1rem;color:var(--text);font-family:'Inter',sans-serif;
+}
+.search-input::placeholder{color:var(--text3)}
+.search-count{
+  position:absolute;right:1.25rem;top:50%;transform:translateY(-50%);
+  font-size:0.75rem;color:var(--text3);font-family:'JetBrains Mono',monospace;
+}
+
+/* FILTERS */
+.filters{
+  display:flex;gap:0.5rem;flex-wrap:wrap;
+  padding:1rem 0 0;
+}
+.filter-btn{
+  padding:0.4rem 0.85rem;border-radius:20px;
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text2);font-size:0.75rem;font-weight:500;
+  cursor:pointer;transition:all 0.15s;white-space:nowrap;
+  font-family:'Inter',sans-serif;
+}
+.filter-btn:hover{border-color:var(--border2);color:var(--text)}
+.filter-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent2)}
+
+/* GRID */
+.main{max-width:1400px;margin:0 auto;width:100%;padding:1.5rem 2rem 3rem;flex:1}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:1rem;
+}
+
+/* CARD */
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;transition:all 0.2s;cursor:pointer;
+  display:flex;flex-direction:column;
+}
+.card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.card-img{
+  aspect-ratio:4/3;background:var(--surface2);
+  display:grid;place-items:center;overflow:hidden;position:relative;
+}
+.card-img img{width:100%;height:100%;object-fit:contain;padding:0.75rem;transition:transform 0.3s}
+.card:hover .card-img img{transform:scale(1.05)}
+.card-img .no-img{
+  color:var(--text3);font-size:0.8rem;display:flex;flex-direction:column;
+  align-items:center;gap:0.5rem;
+}
+.card-img .no-img svg{opacity:0.3}
+.card-body{padding:1rem 1.15rem;display:flex;flex-direction:column;gap:0.5rem;flex:1}
+.card-sku{
+  font-family:'JetBrains Mono',monospace;font-size:0.95rem;font-weight:600;
+  color:var(--accent2);letter-spacing:-0.3px;
+}
+.card-type{font-size:0.8rem;color:var(--text2);font-weight:400}
+.card-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0.75rem 1.15rem;border-top:1px solid var(--border);
+  margin-top:auto;
+}
+.card-loc{
+  font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--text3);
+  display:flex;align-items:center;gap:0.4rem;
+}
+.card-loc svg{width:14px;height:14px;opacity:0.5}
+.badge{
+  font-size:0.6rem;padding:0.2rem 0.5rem;border-radius:10px;
+  font-weight:600;text-transform:uppercase;letter-spacing:0.5px;
+}
+.badge-img{background:#48c07818;color:var(--green)}
+.badge-noimg{background:#e0484818;color:var(--red)}
+
+/* MODAL */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);
+  z-index:200;display:none;place-items:center;padding:2rem;
+}
+.modal-overlay.open{display:grid}
+.modal{
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  max-width:560px;width:100%;overflow:hidden;animation:modalIn 0.2s;
+}
+@keyframes modalIn{from{opacity:0;transform:scale(0.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-img{
+  aspect-ratio:4/3;background:var(--surface2);display:grid;place-items:center;
+  border-bottom:1px solid var(--border);
+}
+.modal-img img{max-width:100%;max-height:100%;object-fit:contain;padding:1.5rem}
+.modal-body{padding:1.5rem}
+.modal-sku{font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:700;color:var(--accent2)}
+.modal-row{display:flex;justify-content:space-between;padding:0.75rem 0;border-bottom:1px solid var(--border)}
+.modal-row:last-child{border-bottom:none}
+.modal-label{font-size:0.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;font-weight:500}
+.modal-val{font-size:0.9rem;color:var(--text);font-weight:500}
+.modal-close{
+  position:absolute;top:1rem;right:1rem;width:36px;height:36px;border-radius:50%;
+  background:var(--surface2);border:1px solid var(--border);color:var(--text2);
+  display:grid;place-items:center;cursor:pointer;transition:all 0.15s;font-size:1.1rem;
+}
+.modal-close:hover{background:var(--surface3);color:var(--text)}
+
+/* EMPTY STATE */
+.empty{
+  text-align:center;padding:4rem 1rem;color:var(--text3);
+}
+.empty svg{margin-bottom:1rem;opacity:0.3}
+.empty h3{color:var(--text2);font-weight:500;margin-bottom:0.5rem}
+.empty p{font-size:0.85rem}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .header-inner{padding:0}
+  .header{padding:0 1rem}
+  .search-area,.main{padding-left:1rem;padding-right:1rem}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0.75rem}
+  .header-stats{display:none}
+  .card-body{padding:0.75rem}
+  .card-sku{font-size:0.8rem}
+  .logo-tag{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <a class="logo" href="#">
+      <div class="logo-icon">RW</div>
+      <span class="logo-text">ReadyWise</span>
+      <span class="logo-tag">Warehouse Catalog</span>
+    </a>
+    <div class="header-stats">
+      <div class="stat">
+        <div class="stat-val" id="totalCount">0</div>
+        <div class="stat-label">Products</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="imgCount">0</div>
+        <div class="stat-label">With Image</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="typeCount">0</div>
+        <div class="stat-label">Categories</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- SEARCH -->
+<div class="search-area">
+  <div class="search-box">
+    <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="search-input" id="search" type="text" placeholder="Search by SKU, type, or location..." autocomplete="off" autofocus>
+    <span class="search-count" id="resultCount"></span>
+  </div>
+  <div class="filters" id="filters"></div>
+</div>
+
+<!-- GRID -->
+<main class="main">
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" style="display:none">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <h3>No products found</h3>
+    <p>Try a different search term or clear your filters</p>
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" id="modalClose">&times;</button>
+    <div class="modal-img" id="modalImg"></div>
+    <div class="modal-body">
+      <div class="modal-sku" id="modalSku"></div>
+      <div style="margin-top:1rem">
+        <div class="modal-row"><span class="modal-label">Type</span><span class="modal-val" id="modalType"></span></div>
+        <div class="modal-row"><span class="modal-label">Location</span><span class="modal-val" id="modalLoc"></span></div>
+        <div class="modal-row"><span class="modal-label">Image</span><span class="modal-val" id="modalImgStatus"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PRODUCTS = [{"sku": "RW01-635GSG", "type": "Backpack", "location": "740915", "image": ""}, {"sku": "RW01-636GSG", "type": "Backpack", "location": "741015", "image": ""}, {"sku": "WS06-001", "type": "Backpack", "location": "730810", "image": ""}, {"sku": "RWBRWN10-633GSG", "type": "Black Backpack", "location": "741215.0", "image": ""}, {"sku": "RW05-029", "type": "Brown Case", "location": "740610", "image": ""}, {"sku": "RW07-710", "type": "Brown Case", "location": "740810", "image": ""}, {"sku": "RW26-011", "type": "Brown Case", "location": "720910", "image": ""}, {"sku": "RW26-012", "type": "Brown Case", "location": "721015", "image": ""}, {"sku": "RW26-013", "type": "Brown Case", "location": "721010", "image": ""}, {"sku": "RW26-021", "type": "Brown Case", "location": "721115", "image": ""}, {"sku": "RW26-022", "type": "Brown Case", "location": "721110.0", "image": ""}, {"sku": "RW26-023", "type": "Brown Case", "location": "721215", "image": ""}, {"sku": "RW26-031", "type": "Brown Case", "location": "721210", "image": ""}, {"sku": "RW26-032", "type": "Brown Case", "location": "721315", "image": ""}, {"sku": "RW26-033", "type": "Brown Case", "location": "721310", "image": ""}, {"sku": "RWSK05-030", "type": "Brown Case", "location": "710110", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707733/fnsg/ReadyWise/RWSK05-030.jpg"}, {"sku": "RWSK05-031", "type": "Brown Case", "location": "710115", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707735/fnsg/ReadyWise/RWSK05-031.jpg"}, {"sku": "RWSK05-032", "type": "Brown Case", "location": "710210", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707736/fnsg/ReadyWise/RWSK05-032.jpg"}, {"sku": "RWSK05-033", "type": "Brown Case", "location": "710215", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707731/fnsg/ReadyWise/RWSK05-033.jpg"}, {"sku": "RWSK05-034", "type": "Brown Case", "location": "710310", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707729/fnsg/ReadyWise/RWSK05-034.jpg"}, {"sku": "RWSK05-035", "type": "Brown Case", "location": "710315", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707733/fnsg/ReadyWise/RWSK05-035.jpg"}, {"sku": "RWSK05-036", "type": "Brown Case", "location": "710410", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707732/fnsg/ReadyWise/RWSK05-036.jpg"}, {"sku": "RWSK05-037", "type": "Brown Case", "location": "710415", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707734/fnsg/ReadyWise/RWSK05-037.jpg"}, {"sku": "RWSK05-038", "type": "Brown Case", "location": "710510", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707732/fnsg/ReadyWise/RWSK05-038.jpg"}, {"sku": "RWSK05-039", "type": "Brown Case", "location": "710515", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707738/fnsg/ReadyWise/RWSK05-039.jpg"}, {"sku": "RWSK05-040", "type": "Brown Case", "location": "710610", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707734/fnsg/ReadyWise/RWSK05-040.jpg"}, {"sku": "RWSK05-041", "type": "Brown Case", "location": "710615", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707739/fnsg/ReadyWise/RWSK05-041.jpg"}, {"sku": "RWSK05-042", "type": "Brown Case", "location": "710710", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707730/fnsg/ReadyWise/RWSK05-042.jpg"}, {"sku": "RWSK05-043", "type": "Brown Case", "location": "710715", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707738/fnsg/ReadyWise/RWSK05-043.jpg"}, {"sku": "RWSK05-044", "type": "Brown Case", "location": "710810", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707736/fnsg/ReadyWise/RWSK05-044.jpg"}, {"sku": "RWSK05-045", "type": "Brown Case", "location": "710815", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707739/fnsg/ReadyWise/RWSK05-045.jpg"}, {"sku": "RWSK05-049", "type": "Brown Case", "location": "710910", "image": ""}, {"sku": "RWSK05-220", "type": "Brown Case", "location": "710915", "image": ""}, {"sku": "RWSK05-221", "type": "Brown Case", "location": "711010", "image": ""}, {"sku": "RWSK05-222", "type": "Brown Case", "location": "711015", "image": ""}, {"sku": "RWSK05-223", "type": "Brown Case", "location": "711010", "image": ""}, {"sku": "RWSK05-224", "type": "Brown Case", "location": "711115", "image": ""}, {"sku": "RWSK05-940", "type": "Brown Case", "location": "711210", "image": ""}, {"sku": "RWSK05-941", "type": "Brown Case", "location": "711215", "image": ""}, {"sku": "RWSK05-942", "type": "Brown Case", "location": "711310", "image": ""}, {"sku": "RWSK05-943", "type": "Brown Case", "location": "711315", "image": ""}, {"sku": "01-139HH", "type": "Bucket", "location": "740110", "image": ""}, {"sku": "AZRW10-130", "type": "Bucket", "location": "750110", "image": ""}, {"sku": "AZRW10-131", "type": "Bucket", "location": "750210", "image": ""}, {"sku": "RW01-360", "type": "Bucket", "location": "740310", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707692/fnsg/ReadyWise/RW01-360.jpg"}, {"sku": "RW05-516", "type": "Bucket", "location": "740315", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707691/fnsg/ReadyWise/RW05-516.jpg"}, {"sku": "RW05-921", "type": "Bucket", "location": "740510", "image": ""}, {"sku": "RW05-923", "type": "Bucket", "location": "740515", "image": ""}, {"sku": "RW05-928", "type": "Bucket", "location": "750115", "image": ""}, {"sku": "RW05-929", "type": "Bucket", "location": "750215", "image": ""}, {"sku": "RW05-932", "type": "Bucket", "location": "750315", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707706/fnsg/ReadyWise/RW05-932.jpg"}, {"sku": "RW07-704", "type": "Bucket", "location": "750410", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707690/fnsg/ReadyWise/RW07-704.jpg"}, {"sku": "RW10-014", "type": "Bucket", "location": "750415", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707670/fnsg/ReadyWise/RW10-014.jpg"}, {"sku": "RW10-030", "type": "Bucket", "location": "750515", "image": ""}, {"sku": "RW10-031", "type": "Bucket", "location": "750615", "image": ""}, {"sku": "RW10-100", "type": "Bucket", "location": "750715", "image": ""}, {"sku": "RW10-104", "type": "Bucket", "location": "750810", "image": ""}, {"sku": "RW10-118", "type": "Bucket", "location": "750815", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707689/fnsg/ReadyWise/RW10-118.jpg"}, {"sku": "RW10-120", "type": "Bucket", "location": "750910", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707688/fnsg/ReadyWise/RW10-120.jpg"}, {"sku": "RW10-121", "type": "Bucket", "location": "750915", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707687/fnsg/ReadyWise/RW10-121.jpg"}, {"sku": "RW10-122", "type": "Bucket", "location": "751010", "image": ""}, {"sku": "RW10-140", "type": "Bucket", "location": "751015", "image": ""}, {"sku": "RW10-150", "type": "Bucket", "location": "751110.0", "image": ""}, {"sku": "RW10-152", "type": "Bucket", "location": "751115", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707668/fnsg/ReadyWise/RW10-152.jpg"}, {"sku": "RW10-160", "type": "Bucket", "location": "751210", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707669/fnsg/ReadyWise/RW10-160.jpg"}, {"sku": "RW10-170", "type": "Bucket", "location": "751215", "image": ""}, {"sku": "RW10-184", "type": "Bucket", "location": "751310", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707685/fnsg/ReadyWise/RW10-184.jpg"}, {"sku": "RW10-193", "type": "Bucket", "location": "751315", "image": ""}, {"sku": "RW10-825", "type": "Bucket", "location": "751410", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707684/fnsg/ReadyWise/RW10-825.jpg"}, {"sku": "RW40-52120", "type": "Bucket", "location": "750610", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707752/fnsg/ReadyWise/RW40-52120.jpg"}, {"sku": "RW40-62120", "type": "Bucket", "location": "750710", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707753/fnsg/ReadyWise/RW40-62120.jpg"}, {"sku": "RWCHMK01-060", "type": "Bucket", "location": "740410", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707692/fnsg/ReadyWise/RWCHMK01-060.jpg"}, {"sku": "RWGF10-184", "type": "Bucket", "location": "751415", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707687/fnsg/ReadyWise/RWGF10-184.jpg"}, {"sku": "RWMK01-120", "type": "Bucket", "location": "740415", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707693/fnsg/ReadyWise/RWMK01-120.jpg"}, {"sku": "RWWM10-100", "type": "Bucket", "location": "750310", "image": ""}, {"sku": "RWWM10-120", "type": "Bucket", "location": "750510", "image": ""}, {"sku": "WS01-003", "type": "Bucket", "location": "730210", "image": ""}, {"sku": "WS01-005", "type": "Bucket", "location": "730310", "image": ""}, {"sku": "WS01-006", "type": "Bucket", "location": "730315", "image": ""}, {"sku": "WS01-007", "type": "Bucket", "location": "730410", "image": ""}, {"sku": "WS01-010", "type": "Bucket", "location": "730515.0", "image": ""}, {"sku": "WS01-012", "type": "Bucket", "location": "730610", "image": ""}, {"sku": "WS01-130", "type": "Bucket", "location": "730615", "image": ""}, {"sku": "WS01-131", "type": "Bucket", "location": "730710", "image": ""}, {"sku": "WS10-001", "type": "Bucket", "location": "730110", "image": ""}, {"sku": "WS10-002", "type": "Bucket", "location": "730115", "image": ""}, {"sku": "WS10-004", "type": "Bucket", "location": "730215", "image": ""}, {"sku": "WS10-008", "type": "Bucket", "location": "730415", "image": ""}, {"sku": "WS10-009", "type": "Bucket", "location": "730510", "image": ""}, {"sku": "WS10-010", "type": "Bucket", "location": "730515", "image": ""}, {"sku": "WS10-012", "type": "Bucket", "location": "730610.0", "image": ""}, {"sku": "WS10-122", "type": "Bucket", "location": "730815", "image": ""}, {"sku": "WS10-130", "type": "Bucket", "location": "730910", "image": ""}, {"sku": "WS10-131", "type": "Bucket", "location": "730915", "image": ""}, {"sku": "WS10-150", "type": "Bucket", "location": "731110.0", "image": ""}, {"sku": "WS10-400", "type": "Bucket", "location": "731010", "image": ""}, {"sku": "WS10-401", "type": "Bucket", "location": "731015", "image": ""}, {"sku": "RWBRWN10-622GSG", "type": "Camo Backpack", "location": "741210.0", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707703/fnsg/ReadyWise/RWBRWN10-622GSG.jpg"}, {"sku": "RWSKCN03-001", "type": "Can", "location": "700115", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707716/fnsg/ReadyWise/RWSKCN03-001.jpg"}, {"sku": "RWSKCN03-002", "type": "Can", "location": "700110", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707718/fnsg/ReadyWise/RWSKCN03-002.jpg"}, {"sku": "RWSKCN03-003", "type": "Can", "location": "700215", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707718/fnsg/ReadyWise/RWSKCN03-003.jpg"}, {"sku": "RWSKCN03-004", "type": "Can", "location": "700210", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707719/fnsg/ReadyWise/RWSKCN03-004.jpg"}, {"sku": "RWSKCN03-006", "type": "Can", "location": "700310", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707720/fnsg/ReadyWise/RWSKCN03-006.jpg"}, {"sku": "RWSKCN03-007", "type": "Can", "location": "700415", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707721/fnsg/ReadyWise/RWSKCN03-007.jpg"}, {"sku": "RWSKCN03-008", "type": "Can", "location": "700410", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707721/fnsg/ReadyWise/RWSKCN03-008.jpg"}, {"sku": "RWSKCN03-009", "type": "Can", "location": "700515", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707722/fnsg/ReadyWise/RWSKCN03-009.jpg"}, {"sku": "RWSKCN03-010", "type": "Can", "location": "700510", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707722/fnsg/ReadyWise/RWSKCN03-010.jpg"}, {"sku": "RWSKCN03-012", "type": "Can", "location": "700610", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707724/fnsg/ReadyWise/RWSKCN03-012.jpg"}, {"sku": "RWSKCN03-013", "type": "Can", "location": "700715", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707726/fnsg/ReadyWise/RWSKCN03-013.jpg"}, {"sku": "RWSKCN03-014", "type": "Can", "location": "700710", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707726/fnsg/ReadyWise/RWSKCN03-014.jpg"}, {"sku": "RWSKCN03-015", "type": "Can", "location": "700815", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707728/fnsg/ReadyWise/RWSKCN03-015.jpg"}, {"sku": "RWSKCN03-016", "type": "Can", "location": "700810", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707726/fnsg/ReadyWise/RWSKCN03-016.jpg"}, {"sku": "RWSKCN03-017", "type": "Can", "location": "700915", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707727/fnsg/ReadyWise/RWSKCN03-017.jpg"}, {"sku": "RWSKCN03-018", "type": "Can", "location": "700910", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707727/fnsg/ReadyWise/RWSKCN03-018.jpg"}, {"sku": "RWSKCN03-019", "type": "Can", "location": "701015", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707722/fnsg/ReadyWise/RWSKCN03-019.jpg"}, {"sku": "RWSKCN03-020", "type": "Can", "location": "701010", "image": ""}, {"sku": "RWSKCN03-027", "type": "Can", "location": "701115", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707729/fnsg/ReadyWise/RWSKCN03-027.jpg"}, {"sku": "AZRW05-501", "type": "Color Case", "location": "701210", "image": ""}, {"sku": "AZRW05-505", "type": "Color Case", "location": "701315", "image": ""}, {"sku": "AZRW05-601", "type": "Color Case", "location": "701310", "image": ""}, {"sku": "AZRW05-602", "type": "Color Case", "location": "701415", "image": ""}, {"sku": "AZRW05-603", "type": "Color Case", "location": "701410", "image": ""}, {"sku": "RW05-930", "type": "Color Case", "location": "740615", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707706/fnsg/ReadyWise/RW05-930.jpg"}, {"sku": "RW10-010", "type": "Color Case", "location": "701110.0", "image": ""}, {"sku": "RW10-011", "type": "Color Case", "location": "701215", "image": ""}, {"sku": "RW10-016", "type": "Color Case", "location": "740715", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707666/fnsg/ReadyWise/RW10-016.jpg"}, {"sku": "RW10-142", "type": "Color Case", "location": "740210", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707667/fnsg/ReadyWise/RW10-142.jpg"}, {"sku": "WS05-100", "type": "Color Case", "location": "730715", "image": ""}, {"sku": "WS15-100", "type": "Color Case", "location": "731215.0", "image": ""}, {"sku": "RW10-622GSG", "type": "Color Case - Camo BP", "location": "741010", "image": ""}, {"sku": "RW10-621GSG", "type": "Color Case - Red BP", "location": "740910", "image": ""}, {"sku": "RW05-401", "type": "Green Case", "location": "720115", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707714/fnsg/ReadyWise/RW05-401.jpg"}, {"sku": "RW05-402", "type": "Green Case", "location": "720110", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707715/fnsg/ReadyWise/RW05-402.jpg"}, {"sku": "RW05-403", "type": "Green Case", "location": "720215", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707714/fnsg/ReadyWise/RW05-403.jpg"}, {"sku": "RW05-404", "type": "Green Case", "location": "720210", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707712/fnsg/ReadyWise/RW05-404.jpg"}, {"sku": "RW05-405", "type": "Green Case", "location": "720315", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707716/fnsg/ReadyWise/RW05-405.jpg"}, {"sku": "RW05-406", "type": "Green Case", "location": "720310", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707715/fnsg/ReadyWise/RW05-406.jpg"}, {"sku": "RW05-407", "type": "Green Case", "location": "720415", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707713/fnsg/ReadyWise/RW05-407.jpg"}, {"sku": "RW05-408", "type": "Green Case", "location": "720410", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707716/fnsg/ReadyWise/RW05-408.jpg"}, {"sku": "RW05-800", "type": "Green Case", "location": "720515", "image": ""}, {"sku": "RW05-801", "type": "Green Case", "location": "720510", "image": ""}, {"sku": "RW05-802", "type": "Green Case", "location": "720615", "image": ""}, {"sku": "RW05-803", "type": "Green Case", "location": "720610", "image": ""}, {"sku": "RW05-804", "type": "Green Case", "location": "720715", "image": ""}, {"sku": "RW05-805", "type": "Green Case", "location": "720710", "image": ""}, {"sku": "RW05-806", "type": "Green Case", "location": "720815", "image": ""}, {"sku": "RW05-807", "type": "Green Case", "location": "720810", "image": ""}, {"sku": "RW05-808", "type": "Green Case", "location": "720915", "image": ""}, {"sku": "RW01-629GSG", "type": "Plasma Lighter", "location": "740325.0", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707704/fnsg/ReadyWise/RW01-629GSG.jpg"}, {"sku": "RW03-191", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-192", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-193", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-194", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-196", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-197", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-201", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-202", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-203", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-204", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-205", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-206", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-207", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-208", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-800", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-801", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-802", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-803", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-804", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-805", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-806", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-807", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-808", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW03-913", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW04-200", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW04-201", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW04-202", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW04-203", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW04-204", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW04-205", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW04-206", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW04-207", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RW04-818", "type": "Pouch", "location": "721415.0", "image": ""}, {"sku": "RWSK02-005", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-006", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-007", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-008", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-009", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-010", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-011", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-012", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-013", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-016", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-021", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-022", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-024", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-025", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-030", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-031", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-032", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-033", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-034", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-035", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-036", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-037", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-038", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-039", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-040", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-041", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-042", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-043", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-044", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-045", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-049", "type": "Pouch", "location": "GAPA", "image": ""}, {"sku": "RWSK02-060", "type": "Pouch", "location": "P710725", "image": ""}, {"sku": "RWSK02-061", "type": "Pouch", "location": "P710820", "image": ""}, {"sku": "RWSK02-062", "type": "Pouch", "location": "P710825", "image": ""}, {"sku": "RWSK02-063", "type": "Pouch", "location": "P710920", "image": ""}, {"sku": "RWSK02-064", "type": "Pouch", "location": "P710925", "image": ""}, {"sku": "RWSK02-065", "type": "Pouch", "location": "P711020", "image": ""}, {"sku": "RWSK02-066", "type": "Pouch", "location": "P711025", "image": ""}, {"sku": "RWSK02-067", "type": "Pouch", "location": "P711120", "image": ""}, {"sku": "RWSK02-220", "type": "Pouch", "location": "P710915", "image": ""}, {"sku": "RWSK02-221", "type": "Pouch", "location": "P711010", "image": ""}, {"sku": "RWSK02-222", "type": "Pouch", "location": "P711015", "image": ""}, {"sku": "RWBRWN10-621GSG", "type": "Red Backpack", "location": "741115", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707702/fnsg/ReadyWise/RWBRWN10-621GSG.jpg"}, {"sku": "PKGRW0002", "type": "Red Bag", "location": "740425.0", "image": ""}, {"sku": "RW01-634GSG", "type": "Red Bag", "location": "740815", "image": ""}, {"sku": "RW05-931", "type": "Red Bag", "location": "740710", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707705/fnsg/ReadyWise/RW05-931.jpg"}, {"sku": "RW10-641", "type": "Red Bag", "location": "740115", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707703/fnsg/ReadyWise/RW10-641.jpg"}, {"sku": "RW05-021", "type": "Red Case", "location": "711415.0", "image": ""}, {"sku": "RW05-024", "type": "Red Case", "location": "711515.0", "image": ""}, {"sku": "RWSK05-005", "type": "Red Case", "location": "710120", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707748/fnsg/ReadyWise/RWSK05-005.jpg"}, {"sku": "RWSK05-006", "type": "Red Case", "location": "710125", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707747/fnsg/ReadyWise/RWSK05-006.jpg"}, {"sku": "RWSK05-007", "type": "Red Case", "location": "710220", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707746/fnsg/ReadyWise/RWSK05-007.jpg"}, {"sku": "RWSK05-008", "type": "Red Case", "location": "710225", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707746/fnsg/ReadyWise/RWSK05-008.jpg"}, {"sku": "RWSK05-009", "type": "Red Case", "location": "710320", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707749/fnsg/ReadyWise/RWSK05-009.jpg"}, {"sku": "RWSK05-016", "type": "Red Case", "location": "710325", "image": ""}, {"sku": "RWSK05-021", "type": "Red Case", "location": "710420", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707748/fnsg/ReadyWise/RWSK05-021.jpg"}, {"sku": "RWSK05-022", "type": "Red Case", "location": "710425", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707752/fnsg/ReadyWise/RWSK05-022.jpg"}, {"sku": "RWSK05-023", "type": "Red Case", "location": "710520", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707750/fnsg/ReadyWise/RWSK05-023.jpg"}, {"sku": "RWSK05-024", "type": "Red Case", "location": "710525", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707750/fnsg/ReadyWise/RWSK05-024.jpg"}, {"sku": "RWSK05-025", "type": "Red Case", "location": "710620", "image": ""}, {"sku": "RWSK05-060", "type": "Red Case", "location": "710725", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707742/fnsg/ReadyWise/RWSK05-060.jpg"}, {"sku": "RWSK05-061", "type": "Red Case", "location": "710820", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707743/fnsg/ReadyWise/RWSK05-061.jpg"}, {"sku": "RWSK05-062", "type": "Red Case", "location": "710825", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707740/fnsg/ReadyWise/RWSK05-062.jpg"}, {"sku": "RWSK05-063", "type": "Red Case", "location": "710920", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707744/fnsg/ReadyWise/RWSK05-063.jpg"}, {"sku": "RWSK05-064", "type": "Red Case", "location": "710925", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707743/fnsg/ReadyWise/RWSK05-064.jpg"}, {"sku": "RWSK05-065", "type": "Red Case", "location": "711020", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707740/fnsg/ReadyWise/RWSK05-065.jpg"}, {"sku": "RWSK05-066", "type": "Red Case", "location": "711025", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707745/fnsg/ReadyWise/RWSK05-066.jpg"}, {"sku": "RWSK05-067", "type": "Red Case", "location": "711120", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707741/fnsg/ReadyWise/RWSK05-067.jpg"}, {"sku": "RWSK05-910", "type": "Red Case", "location": "711125", "image": ""}, {"sku": "RWSK05-911", "type": "Red Case", "location": "711220", "image": ""}, {"sku": "RWSK05-912", "type": "Red Case", "location": "711225", "image": ""}, {"sku": "RWSK05-913", "type": "Red Case", "location": "711320", "image": ""}, {"sku": "RW08-000", "type": "Water Bottle", "location": "740215.0", "image": "https://res.cloudinary.com/dr7fov4v4/image/upload/v1775707707/fnsg/ReadyWise/RW08-000.jpg"}, {"sku": "08-002", "type": "Water Filter", "location": "740325.0", "image": ""}];
+
+const types = [...new Set(PRODUCTS.filter(p=>p.type).map(p=>p.type))].sort();
+const grid = document.getElementById('grid');
+const empty = document.getElementById('empty');
+const search = document.getElementById('search');
+const resultCount = document.getElementById('resultCount');
+const filtersEl = document.getElementById('filters');
+const modal = document.getElementById('modal');
+
+document.getElementById('totalCount').textContent = PRODUCTS.length;
+document.getElementById('imgCount').textContent = PRODUCTS.filter(p=>p.image).length;
+document.getElementById('typeCount').textContent = types.length;
+
+let activeType = null;
+
+// Build filters
+const allBtn = document.createElement('button');
+allBtn.className = 'filter-btn active';
+allBtn.textContent = 'All';
+allBtn.onclick = () => { activeType = null; updateFilters(); render(); };
+filtersEl.appendChild(allBtn);
+
+types.forEach(t => {
+  const btn = document.createElement('button');
+  btn.className = 'filter-btn';
+  btn.textContent = t;
+  btn.dataset.type = t;
+  btn.onclick = () => { activeType = activeType === t ? null : t; updateFilters(); render(); };
+  filtersEl.appendChild(btn);
+});
+
+function updateFilters() {
+  filtersEl.querySelectorAll('.filter-btn').forEach(b => {
+    if (!b.dataset.type) b.classList.toggle('active', !activeType);
+    else b.classList.toggle('active', b.dataset.type === activeType);
+  });
+}
+
+function render() {
+  const q = search.value.toLowerCase().trim();
+  const filtered = PRODUCTS.filter(p => {
+    if (activeType && p.type !== activeType) return false;
+    if (!q) return true;
+    return p.sku.toLowerCase().includes(q) || p.type.toLowerCase().includes(q) || p.location.toLowerCase().includes(q);
+  });
+
+  resultCount.textContent = q || activeType ? filtered.length + ' / ' + PRODUCTS.length : '';
+
+  if (!filtered.length) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  grid.innerHTML = filtered.map((p, i) => `
+    <div class="card" onclick="openModal(${PRODUCTS.indexOf(p)})">
+      <div class="card-img">
+        ${p.image 
+          ? `<img src="${p.image}" alt="${p.sku}" loading="lazy">` 
+          : `<div class="no-img"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>No image</span></div>`
+        }
+      </div>
+      <div class="card-body">
+        <div class="card-sku">${p.sku}</div>
+        <div class="card-type">${p.type || '—'}</div>
+      </div>
+      <div class="card-footer">
+        <div class="card-loc">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          ${p.location || '—'}
+        </div>
+        <span class="badge ${p.image ? 'badge-img' : 'badge-noimg'}">${p.image ? 'IMG' : 'NO IMG'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openModal(idx) {
+  const p = PRODUCTS[idx];
+  document.getElementById('modalSku').textContent = p.sku;
+  document.getElementById('modalType').textContent = p.type || '—';
+  document.getElementById('modalLoc').textContent = p.location || '—';
+  document.getElementById('modalImg').innerHTML = p.image
+    ? `<img src="${p.image}" alt="${p.sku}">`
+    : `<div class="no-img" style="padding:3rem"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span style="margin-top:0.5rem;color:var(--text3)">No image available</span></div>`;
+  document.getElementById('modalImgStatus').innerHTML = p.image
+    ? `<a href="${p.image}" target="_blank" style="color:var(--accent);text-decoration:none;font-size:0.8rem">View full image ↗</a>`
+    : '<span style="color:var(--red)">Not available</span>';
+  modal.classList.add('open');
+}
+
+document.getElementById('modalClose').onclick = () => modal.classList.remove('open');
+modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('open'); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') modal.classList.remove('open'); });
+
+search.addEventListener('input', render);
+render();
+</script>
+
+<footer style="
+  text-align:center;
+  padding:1.5rem 2rem;
+  border-top:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:0.6rem;
+  color:var(--text3);
+  font-size:0.72rem;
+  letter-spacing:0.5px;
+  text-transform:uppercase;
+">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" opacity="0.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+  Powered by&nbsp;<a href="https://firstnationalstaffing.com" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:600;letter-spacing:0.3px">First National Staffing Group</a>
+</footer>
+
+</body>
+</html>
